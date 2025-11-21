@@ -1,49 +1,39 @@
 import pandas as pd
 import requests
+import urllib.parse
 
 class SouthAfricaFetcher:
     def __init__(self):
+        self.base = "https://api.resbank.co.za/series"
 
-        # TradingEconomics free access
-        self.api_base = "https://api.tradingeconomics.com"
-        self.api_key = "guest:guest"
-
-    def _fetch(self, endpoint):
-        """ Internal method to fetch data and return cleaned DataFrame """
-
-        url = f"{self.api_base}{endpoint}?c={self.api_key}"
+    def _fetch_csv(self, series_code):
+        """Fetch CSV data from SARB API, return cleaned DataFrame."""
+        url = f"{self.base}/{series_code}/data?format=csv"
 
         try:
-            df = pd.read_json(url)
-            if df.empty:
-                print("⚠️ No data returned from TradingEconomics.")
-                return df
-            
-            # Basic cleaning: sort by date
+            df = pd.read_csv(url)
+            # Clean date column
             df["Date"] = pd.to_datetime(df["Date"])
             df = df.sort_values("Date")
+            df = df.dropna()
             return df
-        
+
         except Exception as e:
-            print(f"❌ Error fetching data: {e}")
-            return pd.Dataframe()
-        
-    # -----------------------------
-    # 📌 Public Fetcher Methods
-    # -----------------------------
+            print(f"❌ SARB error fetching {series_code}: {e}")
+            return pd.DataFrame()
+
+    # -----------------------------------
+    # Public Fetch Methods
+    # -----------------------------------
 
     def fetch_repo_rate(self):
-        """Fetch SA repo / interest rate history."""
+        """South Africa Repo Rate (SARB series BIR/001)."""
+        return self._fetch_csv("BIR/001")
 
-        endpoint = "/historical/country/south africa/indicator/interest rate"
-        return self._fetch(endpoint)
-    
-    def fetch_inflation(self):
-        """Fetch SA inflation rate YoY."""
-        endpoint = "/historical/country/south africa/indicator/inflation rate"
-        return self._fetch(endpoint)
-    
     def fetch_prime_rate(self):
-        """Fetch SA prime lending rate."""
-        endpoint = "/historical/country/south africa/indicator/prime lending rate"
-        return self._fetch(endpoint)
+        """South Africa Prime Rate (SARB series BIR/002)."""
+        return self._fetch_csv("BIR/002")
+
+    def fetch_inflation(self):
+        """South Africa CPI Headline Inflation YoY (KBP/6006)."""
+        return self._fetch_csv("KBP/6006")
