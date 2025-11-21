@@ -2,7 +2,7 @@ from flask import Flask, render_template, request, jsonify
 from fetchers import get_inflation_and_interest
 from forecast import project_costs, loan_costs
 
-app = FlasK(__name__)
+app = Flask(__name__)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
