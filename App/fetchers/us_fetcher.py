@@ -4,7 +4,7 @@ import pandas as pd
 class USFetcher:
     def __init__(self):
         # USA country code = USA
-        self.base = "https://api.worldbank.ord/v2/country/USA/indicator"
+        self.base = "https://api.worldbank.org/v2/country/USA/indicator"
 
     def _fetch(self, indicator):
         """Fetch and clean data from World Bank API."""
