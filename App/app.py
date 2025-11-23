@@ -1,40 +1,45 @@
-from flask import Flask, render_template, request, jsonify
-from fetchers import get_inflation_and_interest
-from forecast import project_costs, loan_costs
+from fetchers.macro_fetcher import MacroFetcher
+import pandas as pd
 
-app = Flask(__name__)
+def print_header(text):
+    print("\n" + "=" * 60)
+    print(text)
+    print("=" * 60)
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    result = None
-    if request.method == "POST":
-        try:
-            groceries = float(request.form.get("groceries", "0"))
-        except:
-            groceries = 0.0
+def main():
+    print_header("🌍 Macro Insights - Unified Macro Fetcher")
 
-        # Fetch latest macro data (interest, inflation) - implementation in fetchers.py
-        macro = get_inflation_and_interest()
+    # User chooses country
+    country = input("Enter a country (South Africa / USA): ").strip()
 
-        # Compute projections
-        projection = project_costs(groceries, macro['inflation_rate'])
+    try:
+        fetcher = MacroFetcher(country)
+    except ValueError as e:
+        print(f"❌ {e}")
+        return
+    
+    # ---------------------------------------------------------
+    # FETCH BASE DATA
+    # ---------------------------------------------------------
 
-        # Example loan calc default values
-        loan = loan_costs(principal=10000, annual_rate=macro['interest_rate'], years=5)
-        result = {
-            "macro": macro,
-            "projection": projection,
-            "loan": loan
-        }
-    return render_template("index.html", result=result)
+    print_header(f"📌 Fetching inflation data for {country}")
+    inflation_df = fetcher.inflation()
+    print(inflation_df.tail())
 
-# API endpoint
-@app.route("/api/convert", methods=["GET"])
+    print_header(f"📌 Fetching lending/interest rate data for {country}")
+    rate_df = fetcher.lending_rate()
+    print(rate_df.tail())
 
-def api_convert():
-    # Example API to return macro data
-    macro = get_inflation_and_interest()
-    return jsonify(macro)
+    print_header(f"📌 Fetching GDP growth data for {country}")
+    gdp_df = fetcher.gdp_growth()
+    print(gdp_df.tail())
+
+    # --------------------------------------------------------
+    # PLACEHOLDER FOR FORECASTING ENGINE
+    # (I will build this next)
+    # --------------------------------------------------------
+
+    print_header("🤖 Forecasting module is coming next...")
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000, debug=True)
+    main()
