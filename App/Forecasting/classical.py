@@ -9,7 +9,7 @@ from typing import Optional, Tuple
 # Helper utilities
 # --------------------------
 
-def series_from_df(df: pd.DataFrame, date_col: str = "Date", value_col: str = "value") -> pd.Series:
+def series_from_df(df: pd.DataFrame, date_col: str = "Date", value_col: str = "Value") -> pd.Series:
     """
     Converts a DataFrame returned by the fetchers into a pandas.Series indexed by Period (year).
     Assumes df has a 'Date' column of datetime-like (or integer year) and a 'Value' column.
@@ -28,7 +28,7 @@ def series_from_df(df: pd.DataFrame, date_col: str = "Date", value_col: str = "v
         s["Year"] = s["Date"].astype(int)
 
     s = s.dropna(subset=["Year", value_col])
-    s = s.frop_duplicates(subset=["Year"])
+    s = s.drop_duplicates(subset=["Year"])
     s = s.sort_values("Year")
     series = pd.Series(data=s[value_col].astype(float).values, index=pd.PeriodIndex(s["Year"].astype(int), freq='A'), name=value_col)
     return series
@@ -82,43 +82,45 @@ class ARIMAForecaster:
 
 class HoltWintersForecaster:
     """
-    For annual data where seasonality is not meaningful, we use either:
-      - Exponential Smoothing without seasonal component, or
-      - SimpleExpSmoothing if the series is very short.
+    For annual data where seasonality is not meaningful, we use:
+      - Exponential Smoothing (non-seasonal) for longer series
+      - SimpleExpSmoothing for short series.
     Expects a pandas Series with PeriodIndex (annual).
     """
 
-    def __init__(self, seasonal_periods: Optional[int] = None, trend: Optional[str] = "add"):
-        # Seasonal_periods not applicable for pure annual non-seasonal data, but kept for API compatibility
-        self.seasonal_periods = seasonal_periods
+    def __init__(self, trend="add"):
         self.trend = trend
         self.fitted = None
-        self.training_series: Optional[pd.Series] = None
+        self.training_series = None
 
     def fit(self, series: pd.Series):
-
         if series is None or series.empty:
             raise ValueError("Empty series provided to HoltWintersForecaster.fit")
         
         ts = series.copy().to_timestamp()
         self.training_series = ts
 
-        # If series is very short, use SimpleExpSmoothing
+        # Very short series -> SimpleExpSmoothing
         if len(ts) < 5:
             model = SimpleExpSmoothing(ts)
-            self.fitted = model.fit()
+            self.fitted = model.fit() # <- MUST HAVE PARENTHESES
         else:
-            # Use ExponentialSmoothing without seasonal components for annual data
             model = ExponentialSmoothing(ts, trend=self.trend, seasonal=None)
-            self.fitted = model.fit
+            self.fitted = model.fit() # <- MUST HAVE PARENTHESES
         return self.fitted
     
     def forecast(self, steps: int = 1) -> pd.Series:
         if self.fitted is None:
-            raise RuntimeError("Model not fitted. Call fit() fit first.")
+            raise RuntimeError("Model not fitted. Call fit() first.")
+        
         pred = self.fitted.forecast(steps)
-        fc_index = pd.period_range(start=self.training_series.index[-1].to_period('A') + 1, periods=steps, freq='A')
-        return pd.Series(data=pred.values, index=fc_index, name="HoltWinters_forecast")
+        fc_index = pd.period_range(
+            start=self.training_series.index[-1].to_period('Y') + 1,
+            periods=steps,
+            freq='Y'
+        )
+
+        return pd.Series(pred.values, index=fc_index, name="HoltWinters_forecast")
     
 
 # ---------------------------
