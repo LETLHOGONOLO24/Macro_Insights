@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+from pmdarima import auto_arima
 
 from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.tsa.holtwinters import SimpleExpSmoothing, ExponentialSmoothing
@@ -121,7 +122,78 @@ class HoltWintersForecaster:
         )
 
         return pd.Series(pred.values, index=fc_index, name="HoltWinters_forecast")
+
+class AutoARIMAForecaster:
+    """
+    Automatic ARIMA forecaster using AIC model selection.
+    Automatically chooses p, d, q based on:
+      - stationarity tests
+      - differencing tests
+      - AIC, AICc, BIC
+    Very useful for macroeconomic annual data.
+    """
+
+    def __init__(self,
+                 seasonal=False,
+                 m=1,
+                 max_p=5,
+                 max_d=2,
+                 max_q=5,
+                 information_criterion='aic'):
+
+        self.seasonal = seasonal
+        self.m = m
+        self.max_p = max_p
+        self.max_d = max_d
+        self.max_q = max_q
+        self.information_criterion = information_criterion
+
+        self.model = None
+        self.fitted = None
+        self.training_series = None
+
+    def fit(self, series: pd.Series):
+        """
+        Fit Auto-ARIMA on annual data (PeriodIndex -> DatetimeIndex).
+        """
+        if series is None or series.empty:
+            raise ValueError("Empty series provided to AutoARIMAForecaster.fit")
+        
+        ts = series.copy().to_timestamp()
+        self.training_series = ts
+
+        self.model = auto_arima(
+            ts,
+            seasonal=self.seasonal,
+            m=self.m,
+            max_p=self.max_p,
+            max_d=self.max_d,
+            max_q=self.max_q,
+            information_criterion=self.information_criterion,
+            trace=False,
+            suppress_warnings=True
+        )
+
+        self.fitted = self.model
+        return self.fitted
     
+    def forecast(self, steps: int = 1) -> pd.Series:
+        """
+        Forecast future values.
+        Returns a pandas Series indexed by future annual periods.
+        """
+        if self.fitted is None:
+            raise RuntimeError("Auto-ARIMA model not fitted. Call fit() first.")
+        
+        pred = self.fitted.predict(n_periods=steps)
+
+        fc_index = pd.period_range(
+            start=self.training_series.index[-1].to_period('Y') + 1,
+            periods=steps,
+            freq='Y'
+        )
+
+        return pd.Series(pred, index=fc_index, name="AutoARIMA_forecast")
 
 # ---------------------------
 # Utility: quick_compare
