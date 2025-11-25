@@ -4,7 +4,8 @@ from Forecasting.classical import (
     series_from_df,
     ARIMAForecaster,
     HoltWintersForecaster,
-    quick_compare
+    quick_compare,
+    AutoARIMAForecaster
 )
 
 # Choose country
@@ -34,3 +35,9 @@ hw = HoltWintersForecaster(trend="add")
 fitted_tail_hw, hw_fc = quick_compare(infl_series, hw, steps=3)
 print("\nHolt-Winters - forecasts:")
 print(hw_fc)
+
+print("\nAuto-ARIMA Forecast:")
+auto_arima_model = AutoARIMAForecaster()
+auto_arima_model.fit(infl_series)
+auto_fc = auto_arima_model.forecast(3)
+print(auto_fc)

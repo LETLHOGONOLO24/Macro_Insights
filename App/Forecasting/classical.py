@@ -159,7 +159,7 @@ class AutoARIMAForecaster:
         if series is None or series.empty:
             raise ValueError("Empty series provided to AutoARIMAForecaster.fit")
         
-        ts = series.copy().to_timestamp()
+        ts = series.copy().to_timestamp(freq='Y')
         self.training_series = ts
 
         self.model = auto_arima(
@@ -186,14 +186,11 @@ class AutoARIMAForecaster:
             raise RuntimeError("Auto-ARIMA model not fitted. Call fit() first.")
         
         pred = self.fitted.predict(n_periods=steps)
+        print("DEBUG AutoARIMA pred:", pred)
 
-        fc_index = pd.period_range(
-            start=self.training_series.index[-1].to_period('Y') + 1,
-            periods=steps,
-            freq='Y'
-        )
+        forecast = pd.Series(pred.values, index=pred.index, name="AutoARIMA_forecast")
 
-        return pd.Series(pred, index=fc_index, name="AutoARIMA_forecast")
+        return forecast
 
 # ---------------------------
 # Utility: quick_compare
