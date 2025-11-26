@@ -39,5 +39,12 @@ print(hw_fc)
 print("\nAuto-ARIMA Forecast:")
 auto_arima_model = AutoARIMAForecaster()
 auto_arima_model.fit(infl_series)
-auto_fc = auto_arima_model.forecast(3)
+
+# UNPACK BOTH forecast + CI
+auto_fc, auto_ci = auto_arima_model.forecast(steps=3)
+
+print("\nForecast values:")
 print(auto_fc)
+
+print("\nConfidence Intervals:")
+print(auto_ci)

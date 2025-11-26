@@ -177,20 +177,37 @@ class AutoARIMAForecaster:
         self.fitted = self.model
         return self.fitted
     
-    def forecast(self, steps: int = 1) -> pd.Series:
+    def forecast(self, steps: int = 1, alpha: float = 0.05):
         """
-        Forecast future values.
-        Returns a pandas Series indexed by future annual periods.
+        Forecast future values with confidence intervals.
+
+        Parameters:
+            steps (int): Number of periods to forecast.
+            alpha (float): Significance level (0.05 = 95% confidence interval).
+
+        Returns:
+            forecast (pd.Series)
+            conf_int (pd.DataFrame) with columns ["lower", "upper"]
         """
         if self.fitted is None:
             raise RuntimeError("Auto-ARIMA model not fitted. Call fit() first.")
         
-        pred = self.fitted.predict(n_periods=steps)
-        print("DEBUG AutoARIMA pred:", pred)
+        # Auto-ARIMA returns both forecasts and confidence intervals
+        pred, conf_int = self.fitted.predict(
+            n_periods=steps,
+            return_conf_int=True,
+            alpha=alpha
+        )
 
         forecast = pd.Series(pred.values, index=pred.index, name="AutoARIMA_forecast")
 
-        return forecast
+        # Build CI DataFrame
+        conf_df = pd.DataFrame({
+            "lower": conf_int[:, 0],
+            "upper": conf_int[:, 1]
+        }, index=forecast.index)
+
+        return forecast, conf_df
 
 # ---------------------------
 # Utility: quick_compare

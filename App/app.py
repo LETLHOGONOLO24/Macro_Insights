@@ -1,45 +1,161 @@
-from fetchers.macro_fetcher import MacroFetcher
-import pandas as pd
+from flask import Flask, jsonify
+from fetchers.south_africa import SouthAfricaFetcher
+from fetchers.us_fetcher import USFetcher
+from Forecasting.classical import AutoARIMAForecaster, series_from_df
 
-def print_header(text):
-    print("\n" + "=" * 60)
-    print(text)
-    print("=" * 60)
+app = Flask(__name__)
 
-def main():
-    print_header("🌍 Macro Insights - Unified Macro Fetcher")
+sa = SouthAfricaFetcher()
+us = USFetcher()
 
-    # User chooses country
-    country = input("Enter a country (South Africa / USA): ").strip()
+# ----------------------------
+# Health check route
+# ----------------------------
 
-    try:
-        fetcher = MacroFetcher(country)
-    except ValueError as e:
-        print(f"❌ {e}")
-        return
+@app.route("/api/ping")
+def ping():
+    return jsonify({"status": "ok", "message": "Macro Insights API is running"})
+
+
+# ---------------------------
+# South Africa Inflation Data
+# ---------------------------
+
+@app.route("/api/sa/inflation")
+def sa_inflation():
+    df = sa.fetch_indicator("ZAF", "FP.CPI.TOLT.ZG") # Inflation (%)
+    if df.empty:
+        return jsonify({"error": "No inflation data found"}), 404
     
-    # ---------------------------------------------------------
-    # FETCH BASE DATA
-    # ---------------------------------------------------------
+    return df.to_json(orient="records")
 
-    print_header(f"📌 Fetching inflation data for {country}")
-    inflation_df = fetcher.inflation()
-    print(inflation_df.tail())
 
-    print_header(f"📌 Fetching lending/interest rate data for {country}")
-    rate_df = fetcher.lending_rate()
-    print(rate_df.tail())
+# ---------------------------
+# South African Inflation Forecast
+# ---------------------------
 
-    print_header(f"📌 Fetching GDP growth data for {country}")
-    gdp_df = fetcher.gdp_growth()
-    print(gdp_df.tail())
+@app.route("/api/sa/inflation/forecast")
+def sa_inflation_forecast():
+    df = sa.fetch_indicator("ZAF", "FP.CPI.TOLT.ZG")
+    if df.empty:
+        return jsonify({"error": "No inflation data found"}), 404
+    
+    series = series_from_df(df)
 
-    # --------------------------------------------------------
-    # PLACEHOLDER FOR FORECASTING ENGINE
-    # (I will build this next)
-    # --------------------------------------------------------
+    model = AutoARIMAForecaster()
+    model.fit(series)
 
-    print_header("🤖 Forecasting module is coming next...")
+    fc, ci = model.forecast(steps=5)
+
+    output = {
+        "forecast": fc.to_dict(),
+        "confidence_intervals": {
+            "lower": ci["lower"].to_dict(),
+            "upper": ci["upper"].to_dict()
+        }
+    }
+
+    return jsonify(output)
+
+
+# -----------------------------
+# South African Interest Rates
+# -----------------------------
+
+@app.route("/api/sa/rates")
+def sa_rates():
+    repo = sa.fetch_indicator("ZAF", "FR.INR.LEND")
+    if repo.empty:
+        return jsonify({"error": "No interest rate data found"}), 404
+    
+    return repo.to_json(orient="records")
+
+
+# ---------------------------
+# South African Inflation Forecast
+# ---------------------------
+
+@app.route("/api/sa/gdp")
+def sa_gdp():
+    df = sa.fetch_indicator("ZAF", "NY.GDP.MKTP.KD.ZG")
+
+    if df.empty:
+        return jsonify({"error": "No South Africa GDP data found"}), 404
+
+    return df.to_json(orient="records")
+
+
+# -----------------------------
+# US Inflation Data
+# -----------------------------
+
+@app.route("/api/us/inflation")
+def us_inflation():
+    df = us.fetch_indicator("USA", "FP.CPI.TOTL.ZG")  # Inflation (% y/y)
+
+    if df.empty:
+        return jsonify({"error": "No US inflation data found"}), 404
+
+    return df.to_json(orient="records")
+
+
+# ---------------------------
+# US Inflation Forecast
+# ---------------------------
+
+@app.route("/api/us/inflation/forecast")
+def us_inflation_forecast():
+    df = us.fetch_indicator("USA", "FP.CPI.TOTL.ZG")
+
+    if df.empty:
+        return jsonify({"error": "No US inflation data found"}), 404
+
+    series = series_from_df(df)
+
+    model = AutoARIMAForecaster()
+    model.fit(series)
+
+    fc, ci = model.forecast(steps=5)
+
+    return jsonify({
+        "forecast": fc.to_dict(),
+        "confidence_intervals": {
+            "lower": ci["lower"].to_dict(),
+            "upper": ci["upper"].to_dict()
+        }
+    })
+
+# ---------------------------
+# US Interest Rates (Lending Rate)
+# ---------------------------
+
+@app.route("/api/us/rates")
+def us_rates():
+    df = us.fetch_indicator("USA", "FR.INR.LEND")
+
+    if df.empty:
+        return jsonify({"error": "No US interest-rate data found"}), 404
+
+    return df.to_json(orient="records")
+
+
+# ---------------------------
+# US GDP Growth
+# ---------------------------
+
+@app.route("/api/us/gdp")
+def us_gdp():
+    df = us.fetch_indicator("USA", "NY.GDP.MKTP.KD.ZG")
+
+    if df.empty:
+        return jsonify({"error": "No US GDP data found"}), 404
+
+    return df.to_json(orient="records")
+
+
+# -----------------------------
+# Start Server
+# -----------------------------
 
 if __name__ == "__main__":
-    main()
+    app.run(debug=True)
