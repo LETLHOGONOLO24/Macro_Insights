@@ -23,7 +23,7 @@ def ping():
 
 @app.route("/api/sa/inflation")
 def sa_inflation():
-    df = sa.fetch_indicator("ZAF", "FP.CPI.TOTL.ZG") # Inflation (%)
+    df = sa.fetch_inflation("FP.CPI.TOTL.ZG") # Inflation (%)
     if df.empty:
         return jsonify({"error": "No inflation data found"}), 404
     
@@ -36,7 +36,7 @@ def sa_inflation():
 
 @app.route("/api/sa/inflation/forecast")
 def sa_inflation_forecast():
-    df = sa.fetch_indicator("ZAF", "FP.CPI.TOTL.ZG")
+    df = sa.fetch_inflation("FP.CPI.TOTL.ZG")
     if df.empty:
         return jsonify({"error": "No inflation data found"}), 404
     
@@ -64,7 +64,7 @@ def sa_inflation_forecast():
 
 @app.route("/api/sa/rates")
 def sa_rates():
-    repo = sa.fetch_indicator("ZAF", "FR.INR.LEND")
+    repo = sa.fetch_lending_rate("FR.INR.LEND")
     if repo.empty:
         return jsonify({"error": "No interest rate data found"}), 404
     
@@ -72,12 +72,12 @@ def sa_rates():
 
 
 # ---------------------------
-# South African Inflation Forecast
+# South African GDP Growth
 # ---------------------------
 
 @app.route("/api/sa/gdp")
 def sa_gdp():
-    df = sa.fetch_indicator("ZAF", "NY.GDP.MKTP.KD.ZG")
+    df = sa.fetch_gdp_growth("NY.GDP.MKTP.KD.ZG")
 
     if df.empty:
         return jsonify({"error": "No South Africa GDP data found"}), 404
@@ -91,7 +91,7 @@ def sa_gdp():
 
 @app.route("/api/us/inflation")
 def us_inflation():
-    df = us.fetch_indicator("USA", "FP.CPI.TOTL.ZG")  # Inflation (% y/y)
+    df = us.fetch_inflation("FP.CPI.TOTL.ZG")  # Inflation (% y/y)
 
     if df.empty:
         return jsonify({"error": "No US inflation data found"}), 404
@@ -105,7 +105,7 @@ def us_inflation():
 
 @app.route("/api/us/inflation/forecast")
 def us_inflation_forecast():
-    df = us.fetch_indicator("USA", "FP.CPI.TOTL.ZG")
+    df = us.fetch_inflation("FP.CPI.TOTL.ZG")
 
     if df.empty:
         return jsonify({"error": "No US inflation data found"}), 404
@@ -131,7 +131,7 @@ def us_inflation_forecast():
 
 @app.route("/api/us/rates")
 def us_rates():
-    df = us.fetch_indicator("USA", "FR.INR.LEND")
+    df = us.fetch_lending_rate("FR.INR.LEND")
 
     if df.empty:
         return jsonify({"error": "No US interest-rate data found"}), 404
@@ -145,13 +145,25 @@ def us_rates():
 
 @app.route("/api/us/gdp")
 def us_gdp():
-    df = us.fetch_indicator("USA", "NY.GDP.MKTP.KD.ZG")
+    df = us._fetch("NY.GDP.MKTP.KD.ZG")
 
     if df.empty:
         return jsonify({"error": "No US GDP data found"}), 404
 
     return df.to_json(orient="records")
 
+# ---------------------------
+# US REAL INTEREST RATES
+# ---------------------------
+
+@app.route("/api/us/real_rates")
+def us_gdp():
+    df = us._fetch("FR.INR.RINR")
+
+    if df.empty:
+        return jsonify({"error": "No real interest rates data found"}), 404
+
+    return df.to_json(orient="records")
 
 # -----------------------------
 # Start Server
