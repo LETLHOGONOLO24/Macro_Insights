@@ -1,6 +1,6 @@
 # app/test_forecast_classical.py
 from fetchers.macro_fetcher import MacroFetcher
-from Forecasting.classical import (
+from forecasting.classical import (
     series_from_df,
     ARIMAForecaster,
     HoltWintersForecaster,

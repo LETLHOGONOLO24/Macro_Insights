@@ -1,21 +1,21 @@
-# Use official lightweight Python image
+# Use official Python image
 FROM python:3.11-slim
 
+# Set working directory
 WORKDIR /app
 
-# copy only requirements first for cache efficiency
-COPY app/requirements.txt ./
+# Copy requirements
+COPY app/requirements.txt .
+
+# Install python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install gunicorn
 
-# copy app code
-COPY app/ ./app
+# Copy the entire app folder
+COPY app/ ./ 
 
-# use env
-ENV FLASK_APP=app/app.py
-ENV FLASK_RUN_HOST=0.0.0.0
-ENV PORT=5000
-
+# Expose port
 EXPOSE 5000
 
-# run using gunicorn for production-like environment
-CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:5000", "app.app:app"]
+# Run Gunicorn
+CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:5000", "app:app"]
