@@ -1,5 +1,7 @@
-Flask==2.2.5
-requests==2.31.0
-beautifulsoup4==4.12.2
-pandas==2.2.2
-gunicorn==20.1.0
+flask
+pandas
+numpy
+requests
+pmdarima
+statsmodels
+scikit-learn
