@@ -157,7 +157,7 @@ def us_gdp():
 # ---------------------------
 
 @app.route("/api/us/real_rates")
-def us_gdp():
+def us_real_rates():
     df = us.fetch_real_interest_rate("FR.INR.RINR")
 
     if df.empty:
