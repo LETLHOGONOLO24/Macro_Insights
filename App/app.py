@@ -23,7 +23,7 @@ def ping():
 
 @app.route("/api/sa/inflation")
 def sa_inflation():
-    df = sa.fetch_indicator("ZAF", "FP.CPI.TOLT.ZG") # Inflation (%)
+    df = sa.fetch_indicator("ZAF", "FP.CPI.TOTL.ZG") # Inflation (%)
     if df.empty:
         return jsonify({"error": "No inflation data found"}), 404
     
@@ -36,7 +36,7 @@ def sa_inflation():
 
 @app.route("/api/sa/inflation/forecast")
 def sa_inflation_forecast():
-    df = sa.fetch_indicator("ZAF", "FP.CPI.TOLT.ZG")
+    df = sa.fetch_indicator("ZAF", "FP.CPI.TOTL.ZG")
     if df.empty:
         return jsonify({"error": "No inflation data found"}), 404
     
