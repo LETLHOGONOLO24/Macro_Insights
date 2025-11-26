@@ -145,7 +145,7 @@ def us_rates():
 
 @app.route("/api/us/gdp")
 def us_gdp():
-    df = us._fetch("NY.GDP.MKTP.KD.ZG")
+    df = us.fetch_gdp_growth("NY.GDP.MKTP.KD.ZG")
 
     if df.empty:
         return jsonify({"error": "No US GDP data found"}), 404
@@ -158,7 +158,7 @@ def us_gdp():
 
 @app.route("/api/us/real_rates")
 def us_gdp():
-    df = us._fetch("FR.INR.RINR")
+    df = us.fetch_real_interest_rate("FR.INR.RINR")
 
     if df.empty:
         return jsonify({"error": "No real interest rates data found"}), 404
