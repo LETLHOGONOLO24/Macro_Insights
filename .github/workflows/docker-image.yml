@@ -30,8 +30,8 @@ jobs:
           echo "Running tests..."
           # Replace with your tests later
           python - <<EOF
-            print("No tests yet — CI pipeline running successfully!")
-            EOF
+print("No tests yet — CI pipeline running successfully!")
+EOF
 
       - name: Build Docker image
         run: |
