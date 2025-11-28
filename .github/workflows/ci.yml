@@ -32,7 +32,7 @@ jobs:
         print("Running basic import test...")
         import pandas as pd
         import numpy as np
-        from Forecasting.classical import AutoARIMAForecaster
+        from forecasting.classical import AutoARIMAForecaster
         print("Imports OK!")
         EOF
 
