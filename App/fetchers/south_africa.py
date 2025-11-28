@@ -30,6 +30,8 @@ class SouthAfricaFetcher:
             df["Date"] = pd.to_datetime(df["Date"], format="%Y")
             df = df.sort_values("Date")
 
+            df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
+
             return df
 
         except Exception as e:
