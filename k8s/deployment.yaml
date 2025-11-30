@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: macro-insights-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: macro-insights-api
+  template:
+    metadata:
+      labels:
+        app: macro-insights-api
+    spec:
+      containers:
+        - name: macro-insights-container
+          image: letlhogonolo24/macro-insights:latest
+          ports:
+            - containerPort: 5000
+          env:
+            - name: PORT
+              value: "5000"
