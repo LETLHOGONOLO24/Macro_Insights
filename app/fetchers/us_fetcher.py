@@ -1,18 +1,29 @@
-import requests
 import pandas as pd
+import requests
 
 class USFetcher:
     def __init__(self):
         self.base = "https://api.worldbank.org/v2/country/USA/indicator"
+        self.headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Accept": "application/json"
+        }
 
     def _fetch(self, indicator):
-        """Fetch and clean data from World Bank API."""
         url = f"{self.base}/{indicator}?format=json&per_page=2000"
 
         try:
-            response = requests.get(url)
+            response = requests.get(url, headers=self.headers, timeout=15)
             data = response.json()
+
+            if not isinstance(data, list) or len(data) < 2:
+                print("❌ Unexpected response:", data)
+                return pd.DataFrame()
+
             raw = data[1]
+            if raw is None:
+                print("❌ Empty dataset:", data)
+                return pd.DataFrame()
 
             df = pd.DataFrame([
                 {
@@ -23,14 +34,13 @@ class USFetcher:
                 if entry["value"] is not None
             ])
 
-            # KEEP AS DATETIME
             df["Date"] = pd.to_datetime(df["Date"], format="%Y")
             df = df.sort_values("Date")
 
             return df
 
         except Exception as e:
-            print(f"❌ World Bank fetch error for {indicator}: {e}")
+            print("❌ World Bank fetch error:", e)
             return pd.DataFrame()
 
     def fetch_inflation(self):
@@ -44,3 +54,4 @@ class USFetcher:
 
     def fetch_gdp_growth(self):
         return self._fetch("NY.GDP.MKTP.KD.ZG")
+
