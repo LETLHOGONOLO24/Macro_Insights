@@ -1,36 +1,47 @@
 import pandas as pd
 import requests
-import urllib.parse
-
-import requests
-import pandas as pd
 
 class SouthAfricaFetcher:
     def __init__(self):
         self.base = "https://api.worldbank.org/v2/country/ZAF/indicator"
 
     def _fetch(self, indicator):
-        """Fetch and clean data from World Bank API."""
+        """Fetch and clean data from World Bank API (safe for Docker + K8s)."""
         url = f"{self.base}/{indicator}?format=json&per_page=2000"
 
         try:
             response = requests.get(url)
             data = response.json()
 
-            # Data is returned as [metadata, actual_data]
+            # World Bank always returns: [metadata, data]
+            if len(data) < 2 or data[1] is None:
+                print(f"⚠️ No data found for indicator {indicator}")
+                return pd.DataFrame()
+
             raw = data[1]
 
-            df = pd.DataFrame([{
-                "Date": int(entry["date"]),
-                "Value": entry["value"]
-            } for entry in raw])
+            # Build DataFrame safely
+            df = pd.DataFrame([
+                {
+                    "Date": entry["date"],
+                    "Value": entry["value"]
+                }
+                for entry in raw
+                if entry["value"] is not None and entry["date"] is not None
+            ])
 
-            # Clean
-            df = df.dropna()
-            df["Date"] = pd.to_datetime(df["Date"], format="%Y")
+            if df.empty:
+                return df
+
+            # --- FIX: Convert Date properly ---
+            df["Date"] = pd.to_datetime(df["Date"], format="%Y", errors="coerce")
+            df = df.dropna(subset=["Date"])
+
+            # Sort by time
             df = df.sort_values("Date")
 
-            df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
+            # Add Year column for forecasting
+            df["Year"] = df["Date"].dt.year.astype(int)
 
             return df
 
@@ -43,13 +54,11 @@ class SouthAfricaFetcher:
     # ------------------------------
 
     def fetch_inflation(self):
-        """South Africa Inflation (annual %)."""
         return self._fetch("FP.CPI.TOTL.ZG")
 
     def fetch_lending_rate(self):
-        """Lending interest rate (%). Closest match to SA bank rate."""
         return self._fetch("FR.INR.LEND")
 
     def fetch_gdp_growth(self):
-        """GDP growth annual %."""
         return self._fetch("NY.GDP.MKTP.KD.ZG")
+
