@@ -50,7 +50,10 @@ class SouthAfricaFetcher:
         return self._fetch("FP.CPI.TOTL.ZG")
 
     def fetch_lending_rate(self):
-        return self._fetch("FR.INR.LEND")
+        return self._fetch("FR.INR.RINR")
+    
+    def fetch_repo_rate(self):
+        return self._fetch("FR.INR.RPOL")
 
     def fetch_gdp_growth(self):
         return self._fetch("NY.GDP.MKTP.KD.ZG")
