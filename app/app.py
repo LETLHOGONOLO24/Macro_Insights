@@ -80,6 +80,20 @@ def sa_rates():
     return repo.to_json(orient="records")
 
 
+# -----------------------------
+# South African Repo Rate
+# -----------------------------
+
+@app.route("/api/sa/repo")
+def sa_repo():
+    repo = sa.fetch_repo_rate()
+    if repo.empty:
+        return jsonify({"error": "No repo rate data found"}), 404
+    
+    
+    return repo.to_json(orient="records")
+
+
 # ---------------------------
 # South African GDP Growth
 # ---------------------------
