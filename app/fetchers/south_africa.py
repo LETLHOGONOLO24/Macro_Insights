@@ -56,7 +56,8 @@ class SouthAfricaFetcher:
         return self._fetch("FR.INR.RPOL")
 
     def fetch_gdp_growth(self):
-        return self._fetch("NY.GDP.MKTP.KD.ZG")
+        df = self._fetch("NY.GDP.MKTP.KD.ZG")
+        return df.dropna()
 
 
 

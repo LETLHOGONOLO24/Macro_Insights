@@ -76,21 +76,7 @@ def sa_rates():
     if repo.empty:
         return jsonify({"error": "No interest rate data found"}), 404
     
-    
-    return repo.to_json(orient="records")
-
-
-# -----------------------------
-# South African Repo Rate
-# -----------------------------
-
-@app.route("/api/sa/repo")
-def sa_repo():
-    repo = sa.fetch_repo_rate()
-    if repo.empty:
-        return jsonify({"error": "No repo rate data found"}), 404
-    
-    
+    repo["Date"] = repo["Date"].dt.strftime("%Y-%m-%d")
     return repo.to_json(orient="records")
 
 
