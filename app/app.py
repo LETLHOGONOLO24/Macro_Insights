@@ -131,20 +131,6 @@ def us_inflation_forecast():
     output = forecast_to_json(fc, ci)
     return jsonify(output)
 
-# ---------------------------
-# US Interest Rates (Lending Rate)
-# ---------------------------
-
-@app.route("/api/us/rates")
-def us_rates():
-    df = us.fetch_lending_rate()
-
-    if df.empty:
-        return jsonify({"error": "No US interest-rate data found"}), 404
-
-    df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
-    return df.to_json(orient="records")
-
 
 # ---------------------------
 # US GDP Growth

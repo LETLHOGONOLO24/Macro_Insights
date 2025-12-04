@@ -1,38 +1,41 @@
-import pandas as pd
 import requests
+import pandas as pd
 
 class USFetcher:
     def __init__(self):
         self.base = "https://api.worldbank.org/v2/country/USA/indicator"
-        self.headers = {
-            "User-Agent": "Mozilla/5.0",
-            "Accept": "application/json"
-        }
 
     def _fetch(self, indicator):
         url = f"{self.base}/{indicator}?format=json&per_page=2000"
-
         try:
-            response = requests.get(url, headers=self.headers, timeout=15)
+            response = requests.get(url)
             data = response.json()
 
-            if not isinstance(data, list) or len(data) < 2:
-                print("❌ Unexpected response:", data)
+            # Validate structure
+            if not isinstance(data, list) or len(data) < 2 or data[1] is None:
                 return pd.DataFrame()
 
             raw = data[1]
-            if raw is None:
-                print("❌ Empty dataset:", data)
-                return pd.DataFrame()
 
-            df = pd.DataFrame([
-                {
-                    "Date": int(entry["date"]),
+            rows = []
+            for entry in raw:
+                if entry["value"] is None:
+                    continue
+
+                # MAKE SURE DATE IS INT
+                try:
+                    year = int(entry["date"])
+                except:
+                    continue
+
+                rows.append({
+                    "Date": year,
                     "Value": entry["value"]
-                }
-                for entry in raw
-                if entry["value"] is not None
-            ])
+                })
+
+            df = pd.DataFrame(rows)
+            if df.empty:
+                return df
 
             df["Date"] = pd.to_datetime(df["Date"], format="%Y")
             df = df.sort_values("Date")
@@ -40,18 +43,15 @@ class USFetcher:
             return df
 
         except Exception as e:
-            print("❌ World Bank fetch error:", e)
+            print(f"❌ US fetch error for {indicator}: {e}")
             return pd.DataFrame()
 
     def fetch_inflation(self):
         return self._fetch("FP.CPI.TOTL.ZG")
 
-    def fetch_lending_rate(self):
-        return self._fetch("FR.INR.RATE")
+    def fetch_gdp_growth(self):
+        return self._fetch("NY.GDP.MKTP.KD.ZG")
 
     def fetch_real_interest_rate(self):
         return self._fetch("FR.INR.RINR")
-
-    def fetch_gdp_growth(self):
-        return self._fetch("NY.GDP.MKTP.KD.ZG")
 
