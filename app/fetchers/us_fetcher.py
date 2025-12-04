@@ -47,7 +47,7 @@ class USFetcher:
         return self._fetch("FP.CPI.TOTL.ZG")
 
     def fetch_lending_rate(self):
-        return self._fetch("FR.INR.LEND")
+        return self._fetch("FR.INR.FRFN")
 
     def fetch_real_interest_rate(self):
         return self._fetch("FR.INR.RINR")
