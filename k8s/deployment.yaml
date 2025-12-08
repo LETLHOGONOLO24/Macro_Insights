@@ -13,10 +13,8 @@ spec:
         app: macro-insights-api
     spec:
       containers:
-        - name: macro-insights-container
+        - name: macro-insights-api
           image: letlhogonolo24/macro-insights:latest
           ports:
             - containerPort: 5000
-          env:
-            - name: PORT
-              value: "5000"
+          
