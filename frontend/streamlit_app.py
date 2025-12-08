@@ -125,3 +125,45 @@ if menu == "United States":
 # ===========================================
 #                   TOOLS
 # ===========================================
+
+if menu == "Tools":
+    st.header("🛠️ Tools & Calculators")
+
+    tool = st.selectbox("Choose a tool:", ["🏪 Grocery Inflation", "🏦 Loan Calculator"])
+
+    # Grocery inflation calculator
+    if tool == "🏪 Grocery Inflation":
+        st.subheader("Grocery Inflation Cost Estimator")
+
+        amount = st.number_input("How much do you spend per month on groceries (R)❓", min_value=0)
+
+        df = get_data("sa/inflation")
+
+        if df is not None and not df.empty:
+            latest = df["Value"].iloc[-1] / 100
+            increased = amount * (1 + latest)
+            st.write(f"Inflation-adjusted monthly cost: **R{increased:,.2f}**")
+        else:
+            st.warning("Inflation data unavailable.")
+
+    # Loan Calculator
+    if tool == "🏦 Loan Calculator":
+        st.subheader("Loan Cost Calculator (based on repo rate)")
+
+        loan = st.number_input("Loan Amount (R)", min_value=0)
+        years = st.slider("Loan term (years)", 1, 30, 5)
+
+        df = get_data("sa/rates")
+        if df is not None and not df.empty:
+            rate = df["Value"].iloc[-1] / 100
+            monthly_rate = rate / 12
+
+            months = years * 12
+            if monthly_rate > 0:
+                payment = loan * (monthly_rate * (1 + monthly_rate)**months) / ((1 + monthly_rate)**months - 1)
+            else:
+                payment = loan / months
+
+            st.write(f"estimated monthly payment: **R {payment:,.2f}**")
+        else:
+            st.warning("Interest-rate data unavailable.")    
