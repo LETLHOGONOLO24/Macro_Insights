@@ -69,4 +69,59 @@ if menu == "South Africa":
             st.warning("No GDP Growth data available.")
 
     # Interest Rates
+    with tab3:
+        df = get_data("sa/rates")
+        if df is not None and not df.empty:
+            st.subheader("Repo / Lending Rate (%)")
+            st.line_chart(df.set_index("Date")["Value"])
+        
+        else:
+            st.warning("No rate data available.")
+
+
+# =======================================
+#           UNITED STATES DASHBOARD
+# =======================================
+
+
+if menu == "United States":
+    st.header("US United States Economic Indicators")
+
+    tab1, tab2, tab3 = st.labs(["Inflation", "GDP Growth", "Interest Rates"])
+
+    # Inflation
+    with tab1:
+        df = get_data("us/inflation")
+        if df is not None and not df.empty:
+            st.subheader("US Inflation (%)")
+            st.line_chart(df.set_index("Date")["Value"])
+
+        else:
+            st.warning("No inflation data available.")
+
     
+    # GDP
+    with tab2:
+        df = get_data("us/gdp")
+        if df is not None and not df.empty:
+            st.subheader("US GDP Growth (%)")
+            st.line_chart(df.set_index("Date")["Value"])
+
+        else:
+            st.warning("No GDP Growth data available.")
+
+
+    # Rates
+    with tab3:
+        df = get_data("us/rates")
+        if df is not None and not df.empty:
+            st.subheader("US Lending Rate (%)")
+            st.line_chart(df.set_index("Date")["Value"])
+
+        else:
+            st.warning("No interest rate data available.")
+
+
+# ===========================================
+#                   TOOLS
+# ===========================================
