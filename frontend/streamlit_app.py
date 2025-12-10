@@ -46,7 +46,7 @@ menu = st.sidebar.radio(
 if menu == "South Africa":
     st.header("ZA South Africa Economic Indicators")
 
-    tab1, tab2, tab3 = st.labs(["Inflation", "GDP Growth", "Interest Rates"])
+    tab1, tab2, tab3 = st.tabs(["Inflation", "GDP Growth", "Interest Rates"])
 
     # Inflation
     with tab1:
@@ -63,7 +63,7 @@ if menu == "South Africa":
         df = get_data("sa/gdp")
         if df is not None and not df.empty:
             st.subheader("GDP Growth (%)")
-            st.line_chart(df.set_index("Date")["value"])
+            st.line_chart(df.set_index("Date")["Value"])
         
         else:
             st.warning("No GDP Growth data available.")
@@ -87,7 +87,7 @@ if menu == "South Africa":
 if menu == "United States":
     st.header("US United States Economic Indicators")
 
-    tab1, tab2, tab3 = st.labs(["Inflation", "GDP Growth", "Interest Rates"])
+    tab1, tab2, tab3 = st.tabs(["Inflation", "GDP Growth", "Interest Rates"])
 
     # Inflation
     with tab1:
@@ -166,4 +166,41 @@ if menu == "Tools":
 
             st.write(f"estimated monthly payment: **R {payment:,.2f}**")
         else:
-            st.warning("Interest-rate data unavailable.")    
+            st.warning("Interest-rate data unavailable.")
+
+# ==========================================
+#               FORECASTS SECTION
+# ==========================================
+
+if menu == "Forecasts":
+    st.header("📈 Inflation Forecasts (SA & US)")
+
+    col1, col2 = st.columns(2)
+
+    # ---------------------------------------------
+    # Helper to fetch forecast & build DataFrame
+    # ---------------------------------------------
+
+    def get_forecast_df(endpoint):
+        try:
+            r = requests.get(f"{API_BASE}/endpoint", timeout=10)
+            if r.status_code != 200:
+                return None
+            
+            data = r.json()
+            fc = data["forecast"]
+            lower = data["confidence_intervals"]["lower"]
+            upper = data["confidence_intervals"]["upper"]
+
+            df = pd.DataFrame({
+                "Date": list(fc.keys()),
+                "Forecast": list(fc.values()),
+                "Lower": list(lower.values()),
+                "Upper": list(upper.values())
+            })
+            return df
+        except Exception as e:
+            st.error(f"Forecast error: {e}")
+            return None
+        
+
