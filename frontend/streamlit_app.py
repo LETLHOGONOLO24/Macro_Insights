@@ -204,3 +204,30 @@ if menu == "Forecasts":
             return None
         
 
+# ------------------------------------------
+# SA Forecast
+# ------------------------------------------
+
+with col1:
+    st.subheader("ZA South Africa Forecast (ARIMA)")
+
+    df_sa = get_forecast_df("sa/inflation/forecast")
+
+    if df_sa is not None:
+        fig, ax = plt.subplots(figsize=(6,4))
+        ax.plot(df_sa["Date"], df_sa["Forecast"], label="Forecast")
+        ax.fill_between(df_sa["Date"], df_sa["Lower"], df_sa["Upper"], alpha=0.3, label="95% CI")
+        ax.set_xticklabels(df_sa["Date"], rotation=45)
+        ax.set_title("South Africa Inflation Forecast")
+        ax.legend()
+        st.pyplot(fig)
+
+        st.dataframe(df_sa)
+
+    else:
+        st.warning("No forecast available 🥲")
+
+
+# ---------------------------------------
+# US Forecast
+# ---------------------------------------
