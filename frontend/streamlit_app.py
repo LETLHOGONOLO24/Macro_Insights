@@ -35,7 +35,7 @@ def get_data(endpoint):
 
 menu = st.sidebar.radio(
     "Navigation",
-    ["South Africa", "United States", "Tools"]
+    ["South Africa", "United States", "Forecasts", "Tools"]
 )
 
 
@@ -231,3 +231,22 @@ with col1:
 # ---------------------------------------
 # US Forecast
 # ---------------------------------------
+
+with col2:
+    st.subheader("US United States Forecast (ARIMA)")
+
+    df_us = get_forecast_df("us/inflation/forecast")
+
+    if df_us is not None:
+        fig, ax = plt.subplots(figsize=(6,4))
+        ax.plot(df_us["Date"], df_us["Forecast"], label="Forecast")
+        ax.fill_between(df_us["Date"], df_us["Lower"], df_us["Upper"], alpha=0.3, label="95% CI")
+        ax.set_xticklabels(df_us["Date"], rotation=45)
+        ax.set_title("US Inflation Forecast")
+        ax.legend()
+        st.pyplot(fig)
+
+        st.dataframe(df_us)
+
+    else:
+        st.warning("No forecast available 🥲")
