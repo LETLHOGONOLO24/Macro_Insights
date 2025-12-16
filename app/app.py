@@ -41,8 +41,7 @@ def sa_inflation():
     if df.empty:
         return jsonify({"error": "No inflation data found"}), 404
     
-    df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
-    return df.to_json(orient="records")
+    return df.to_json(orient="records", date_format="iso")
 
 
 # ---------------------------
@@ -51,19 +50,23 @@ def sa_inflation():
 
 @app.route("/api/sa/inflation/forecast")
 def sa_inflation_forecast():
-    df = sa.fetch_inflation()
-    if df.empty:
-        return jsonify({"error": "No inflation data found"}), 404
-    
-    series = series_from_df(df)
+    try:
+        df = sa.fetch_inflation()
+        series = series_from_df(df)
 
-    model = AutoARIMAForecaster()
-    model.fit(series)
+        model = AutoARIMAForecaster()
+        model.fit(series)
 
-    fc, ci = model.forecast(steps=5)
+        fc, ci = model.forecast(steps=5)
 
-    output = forecast_to_json(fc, ci)
-    return jsonify(output)
+        return jsonify(forecast_to_json(fc, ci))
+
+    except Exception as e:
+        return jsonify({
+            "error": "Forecast failed",
+            "details": str(e)
+        }), 500
+
 
 
 # -----------------------------
@@ -76,8 +79,7 @@ def sa_rates():
     if repo.empty:
         return jsonify({"error": "No interest rate data found"}), 404
     
-    repo["Date"] = repo["Date"].dt.strftime("%Y-%m-%d")
-    return repo.to_json(orient="records")
+    return repo.to_json(orient="records", date_format="iso")
 
 
 # ---------------------------
@@ -91,8 +93,7 @@ def sa_gdp():
     if df.empty:
         return jsonify({"error": "No South Africa GDP data found"}), 404
 
-    df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
-    return df.to_json(orient="records")
+    return df.to_json(orient="records", date_format="iso")
 
 
 # -----------------------------
@@ -106,8 +107,7 @@ def us_inflation():
     if df.empty:
         return jsonify({"error": "No US inflation data found"}), 404
 
-    df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
-    return df.to_json(orient="records")
+    return df.to_json(orient="records", date_format="iso")
 
 
 # ---------------------------
@@ -116,20 +116,23 @@ def us_inflation():
 
 @app.route("/api/us/inflation/forecast")
 def us_inflation_forecast():
-    df = us.fetch_inflation()
+    try:
+        df = us.fetch_inflation()
+        series = series_from_df(df)
 
-    if df.empty:
-        return jsonify({"error": "No US inflation data found"}), 404
+        model = AutoARIMAForecaster()
+        model.fit(series)
 
-    series = series_from_df(df)
+        fc, ci = model.forecast(steps=5)
 
-    model = AutoARIMAForecaster()
-    model.fit(series)
+        return jsonify(forecast_to_json(fc, ci))
 
-    fc, ci = model.forecast(steps=5)
+    except Exception as e:
+        return jsonify({
+            "error": "Forecast failed",
+            "details": str(e)
+        }), 500
 
-    output = forecast_to_json(fc, ci)
-    return jsonify(output)
 
 
 # ---------------------------
@@ -143,8 +146,7 @@ def us_gdp():
     if df.empty:
         return jsonify({"error": "No US GDP data found"}), 404
 
-    df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
-    return df.to_json(orient="records")
+    return df.to_json(orient="records", date_format="iso")
 
 # ---------------------------
 # US REAL INTEREST RATES
@@ -157,8 +159,7 @@ def us_real_rates():
     if df.empty:
         return jsonify({"error": "No real interest rates data found"}), 404
 
-    df["Date"] = df["Date"].dt.strftime("%Y-%m-%d")
-    return df.to_json(orient="records")
+    return df.to_json(orient="records", date_format="iso")
 
 # -----------------------------
 # Start Server

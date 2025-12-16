@@ -10,72 +10,88 @@ from typing import Optional, Tuple
 # Helper utilities
 # --------------------------
 
-def series_from_df(df: pd.DataFrame, date_col: str = "Date", value_col: str = "Value") -> pd.Series:
+def series_from_df(df, value_col="Value", date_col="Date"):
     """
-    Converts a DataFrame returned by the fetchers into a pandas.Series indexed by Period (year).
-    Assumes df has a 'Date' column of datetime-like (or integer year) and a 'Value' column.
-    Returns a Series with dtype float and annaul PeriodIndex
+    Convert API DataFrame to clean time series for forecasting.
     """
+    if df.empty:
+        raise ValueError("Input DataFrame is empty")
 
-    if df is None or df.empty:
-        return pd.Series(dtype=float)
-    
-    # Normalize date to year if needed
     s = df.copy()
-    # If Date is a datetime, convert to year int
-    if pd.api.types.is_datetime64_any_dtype(s["Date"]):
-        s["Year"] = s["Date"].dt.year
-    else:
-        s["Year"] = s["Date"].astype(int)
 
-    s = s.dropna(subset=["Year", value_col])
-    s = s.drop_duplicates(subset=["Year"])
-    s = s.sort_values("Year")
-    series = pd.Series(data=s[value_col].astype(float).values, index=pd.PeriodIndex(s["Year"].astype(int), freq='A'), name=value_col)
+    # Ensure datetime
+    s[date_col] = pd.to_datetime(s[date_col])
+
+    # Sort
+    s = s.sort_values(date_col)
+
+    # Set index
+    s = s.set_index(date_col)
+
+    # Select numeric series
+    series = pd.Series(
+        s[value_col].astype(float).values,
+        index=pd.PeriodIndex(s.index, freq="Y"),
+        name=value_col
+    )
+
+    # Drop missing values
+    series = series.dropna()
+
+    if len(series) < 10:
+        raise ValueError("Not enough data points for ARIMA")
+
     return series
+
 
 # --------------------------
 # ARIMA Forecaster (annual)
 # --------------------------
 
-class ARIMAForecaster:
-    """
-    Simple ARIMA forecaster for annual data.
-    We can provide p, d, q orders or let it default to (1,1,0) which is robust for many annual series.
-    """
-
-    def __init__(self, p: int = 1, d: int = 1, q: int = 0):
-        self.order = (p, d, q)
+class AutoARIMAForecaster:
+    def __init__(self):
         self.model = None
         self.fitted = None
-        self.training_series: Optional[pd.Series] = None
 
-    def fit(self, series: pd.Series):
-        """
-        Fit ARIMA to an annual pandas Series (PEriodIndex).
-        """
-        if series is None or series.empty:
-            raise ValueError("Empty series provided to ARIMAForecaster.fit")
-        
-        # Convert PeriodIndex to DatetimeIndex by taking period start to satisfy statsmodels
+    def fit(self, series):
+        if series is None or len(series) < 10:
+            raise ValueError("Series too short for ARIMA")
 
-        ts = series.copy().to_timestamp()
-        self.training_series = ts
-        self.model = ARIMA(ts, order=self.order)
-        self.fitted = self.model.fit()
-        return self.fitted
-    
-    def forecast(self, steps: int = 1) -> pd.Series:
-        """
-        Forecast the next `steps` years. Returns a pandas Series indexed by Period with freq 'A'.
-        """
+        self.model = pm.auto_arima(
+            series,
+            seasonal=False,
+            stepwise=True,
+            suppress_warnings=True,
+            error_action="ignore"
+        )
+
+        self.fitted = self.model
+
+    def forecast(self, steps=5):
         if self.fitted is None:
-            raise RuntimeError("Model not fitted. Call fit() first.")
-        
-        pred = self.fitted.get_forecast(steps=steps)
-        fc_index = pd.period_range(start=self.training_series.index[-1].to_period('A') + 1, periods=steps, freq='A')
-        values = pred.predicted_mean.values
-        return pd.Series(data=values, index=fc_index, name="ARIMA_forecast")
+            raise RuntimeError("Model not fitted")
+
+        fc, ci = self.fitted.predict(
+            n_periods=steps,
+            return_conf_int=True
+        )
+
+        index = pd.period_range(
+            start=self.fitted.arima_res_.data.endog.index[-1] + 1,
+            periods=steps,
+            freq="Y"
+        )
+
+        fc_series = pd.Series(fc, index=index, name="forecast")
+
+        ci_df = pd.DataFrame(
+            ci,
+            index=index,
+            columns=["lower", "upper"]
+        )
+
+        return fc_series, ci_df
+
     
 # ---------------------------
 # Holt-Winters / Exponential Smoothing Forecaster (annual)
