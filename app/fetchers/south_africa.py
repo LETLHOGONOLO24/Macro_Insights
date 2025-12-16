@@ -15,35 +15,33 @@ class SouthAfricaFetcher:
         url = f"{self.base}/{indicator}?format=json&per_page=2000"
 
         try:
-            response = requests.get(url, headers=self.headers, timeout=15)
-            data = response.json()
+            r = requests.get(url, timeout=20)
+            r.raise_for_status()
+            data = r.json()
 
             # Check if World Bank returns an error structure
             if not isinstance(data, list) or len(data) < 2:
-                print("❌ Unexpected response:", data)
+                print("❌ World Bank returned invalid structure")
                 return pd.DataFrame()
 
-            raw = data[1]
-            if raw is None:
-                print("❌ Empty dataset:", data)
-                return pd.DataFrame()
+            rows = []
+            for entry in data[1]:
+                if entry["value"] is not None:
+                    rows.append({
+                        "Date": pd.to_datetime(entry["date"], format="%Y"),
+                        "Value": float(entry["value"])
+                    })
 
-            df = pd.DataFrame([
-                {
-                    "Date": int(entry["date"]),
-                    "Value": entry["value"]
-                }
-                for entry in raw
-                if entry["value"] is not None
-            ])
+            df = pd.DataFrame(rows)
 
-            df["Date"] = pd.to_datetime(df["Date"], format="%Y")
-            df = df.sort_values("Date")
+            if df.empty:
+                print("⚠️ World Bank returned empty dataset")
+                return df
 
-            return df
+            return df.sort_values("Date")
 
         except Exception as e:
-            print("❌ World Bank fetch error:", e)
+            print(f"❌ Fetch error for {indicator}: {e}")
             return pd.DataFrame()
 
     def fetch_inflation(self):
