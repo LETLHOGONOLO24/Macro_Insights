@@ -14,7 +14,12 @@ RUN apt-get update && apt-get install -y \
 COPY app/requirements.txt .
 
 # Install python dependencies
-RUN pip install --default-timeout=200 --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip && \
+    pip install \
+    --default-timeout=300 \
+    --retries 10 \
+    --no-cache-dir \
+    -r requirements.txt
 RUN pip install gunicorn
 
 # Copy the entire app folder
