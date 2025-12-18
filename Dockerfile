@@ -18,7 +18,9 @@ RUN pip install --default-timeout=200 --no-cache-dir -r requirements.txt
 RUN pip install gunicorn
 
 # Copy the entire app folder
-COPY app/ ./ 
+COPY app/ ./
 
-CMD ["python", "main.py"]
+EXPOSE 5000
+
+CMD ["gunicorn", "-b", "0.0.0.0:5000" "app:app"]
 
