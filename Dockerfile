@@ -20,12 +20,11 @@ RUN pip install --upgrade pip && \
     --retries 10 \
     --no-cache-dir \
     -r requirements.txt
-RUN pip install gunicorn
 
 # Copy the entire app folder
-COPY app/ ./
+COPY app/ ./app
 
 EXPOSE 5000
 
-CMD ["python", "app.py"]
+CMD ["python", "-m", "app.py"]
 
