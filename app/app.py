@@ -1,7 +1,7 @@
 from flask import Flask, jsonify
-from fetchers.south_africa import SouthAfricaFetcher
-from fetchers.us_fetcher import USFetcher
-from forecasting.classical import AutoARIMAForecaster, series_from_df
+from app.fetchers.south_africa import SouthAfricaFetcher
+from app.fetchers.us_fetcher import USFetcher
+from app.forecasting.classical import AutoARIMAForecaster, series_from_df
 import os
 
 app = Flask(__name__)
