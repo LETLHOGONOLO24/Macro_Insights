@@ -13,5 +13,7 @@ services:
       - "8501:8501"
     depends_on:
       - macro_api
+    environment:
+      - API_BASE=http://macro_api:5000/api
     restart: unless-stopped
 

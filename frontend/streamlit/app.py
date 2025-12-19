@@ -2,12 +2,13 @@ import streamlit as st
 import requests
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
 
 # ============================
 # Configuration
 # ============================
 
-API_BASE = "http://127.0.0.1:5000/api"  # Local / Minikube forwarded API
+API_BASE = os.getenv("API_BASE", "http://macro_api:5000/api")
 
 st.set_page_config(
     page_title="Macro Insights Dashboard",
