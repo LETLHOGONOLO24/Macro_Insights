@@ -38,7 +38,7 @@ def get_data(endpoint):
 def get_forecast(endpoint):
     """Fetch forecast JSON (NOT a DataFrame)"""
     try:
-        r = requests.get(f"{API_BASE}/{endpoint}", timeout=10)
+        r = requests.get(f"{API_BASE}/{endpoint}", timeout=60)
         if r.status_code == 200:
             return r.json()
         return None
