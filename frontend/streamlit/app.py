@@ -8,7 +8,7 @@ import os
 # Configuration
 # ============================
 
-API_BASE = os.getenv("API_BASE", "https://macroinsights-production.up.railway.app/api")
+API_BASE = os.getenv("API_BASE", "https://macro-insights.onrender.com")
 
 st.set_page_config(
     page_title="Macro Insights Dashboard",
