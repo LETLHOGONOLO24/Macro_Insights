@@ -57,7 +57,7 @@ class AutoARIMAForecaster:
         if series is None or len(series) < 10:
             raise ValueError("Series too short for ARIMA")
 
-        self.model = pm.auto_arima(
+        self.model = np.auto_arima(
             series,
             seasonal=False,
             stepwise=True,
