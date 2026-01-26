@@ -21,10 +21,17 @@ RUN pip install --upgrade pip && \
     --no-cache-dir \
     -r requirements.txt
 
+# Install gunicorn for production
+RUN pip install gunicorn
+
 # Copy the entire app folder
 COPY app/ ./app
 
+# Lets add a health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:5000/health || exit 1
+
 EXPOSE 5000
 
-CMD ["python", "-m", "app.app"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "--workers", "2", "app.app:app"]
 

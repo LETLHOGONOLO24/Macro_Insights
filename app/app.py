@@ -1,10 +1,12 @@
 from flask import Flask, jsonify
+from flask_cors import CORS
 from app.fetchers.south_africa import SouthAfricaFetcher
 from app.fetchers.us_fetcher import USFetcher
 from app.forecasting.classical import AutoARIMAForecaster, series_from_df
 import os
 
 app = Flask(__name__)
+CORS(app)
 
 sa = SouthAfricaFetcher()
 us = USFetcher()
@@ -30,6 +32,10 @@ def forecast_to_json(fc, ci):
 @app.route("/api/ping")
 def ping():
     return jsonify({"status": "ok", "message": "Macro Insights API is running"})
+
+@app.route("/health")
+def health():
+    return jsonify({"status": "healthy"}), 200
 
 
 # ---------------------------
